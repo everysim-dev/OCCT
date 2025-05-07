@@ -7,6 +7,7 @@
 export aScriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 export aSrcRoot="${aScriptDir}/../.."
 export aBuildRoot=work
+export aFreeType="/usr/include/freetype2/freetype"
 
 export aNbJobs=${NUMBER_OF_PROCESSORS}
 
@@ -59,33 +60,18 @@ echo toCMake=${toCMake}
 if [ "${toCMake}" = "1" ]; then
 
 echo "Configuring OCCT for WASM..."
-echo cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE:FILEPATH="${aToolchain}" \
--DCMAKE_BUILD_TYPE:STRING="Release" \
--DBUILD_LIBRARY_TYPE:STRING="Static" \
--DINSTALL_DIR:PATH="${aDestDir}" \
--DINSTALL_DIR_INCLUDE:STRING="inc" \
--DINSTALL_DIR_RESOURCE:STRING="src" \
--D3RDPARTY_FREETYPE_DIR:PATH="$aFreeType" \
--D3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2:FILEPATH="$aFreeType/include" \
--D3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build:FILEPATH="$aFreeType/include" \
--DBUILD_MODULE_FoundationClasses:BOOL="ON" \
--DBUILD_MODULE_ModelingData:BOOL="${BUILD_ModelingData}" \
--DBUILD_MODULE_ModelingAlgorithms:BOOL="${BUILD_ModelingAlgorithms}" \
--DBUILD_MODULE_Visualization:BOOL="${BUILD_Visualization}" \
--DBUILD_MODULE_ApplicationFramework:BOOL="${BUILD_ApplicationFramework}" \
--DBUILD_MODULE_DataExchange:BOOL="${BUILD_DataExchange}" \
--DBUILD_MODULE_Draw:BOOL="OFF" \
--DBUILD_DOC_Overview:BOOL="OFF" "${aSrcRoot}"
 
 cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE:FILEPATH="${aToolchain}" \
 -DCMAKE_BUILD_TYPE:STRING="Release" \
+-DUSE_VTK:BOOL="ON" \
+-D3RDPARTY_VTK_INCLUDE_DIR:FILEPATH="/usr/include/vtk-9.1" \
 -DBUILD_LIBRARY_TYPE:STRING="Static" \
 -DINSTALL_DIR:PATH="${aDestDir}" \
 -DINSTALL_DIR_INCLUDE:STRING="inc" \
 -DINSTALL_DIR_RESOURCE:STRING="src" \
--D3RDPARTY_FREETYPE_DIR:PATH="$aFreeType" \
--D3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2:FILEPATH="$aFreeType/include" \
--D3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build:FILEPATH="$aFreeType/include" \
+-DFREETYPE_LIBRARY=/home/dh/work/OCCT/freetype/build \
+-DFREETYPE_INCLUDE_DIRS=/home/dh/work/OCCT/freetype/include \
+-D3RDPARTY_FREETYPE_DIR=/home/dh/work/OCCT/freetype/build \
 -DBUILD_MODULE_FoundationClasses:BOOL="ON" \
 -DBUILD_MODULE_ModelingData:BOOL="${BUILD_ModelingData}" \
 -DBUILD_MODULE_ModelingAlgorithms:BOOL="${BUILD_ModelingAlgorithms}" \
@@ -93,7 +79,11 @@ cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE:FILEPATH="${aToolchain}" \
 -DBUILD_MODULE_ApplicationFramework:BOOL="${BUILD_ApplicationFramework}" \
 -DBUILD_MODULE_DataExchange:BOOL="${BUILD_DataExchange}" \
 -DBUILD_MODULE_Draw:BOOL="OFF" \
--DBUILD_DOC_Overview:BOOL="OFF" "${aSrcRoot}"
+-DBUILD_DOC_Overview:BOOL="OFF" "${aSrcRoot}" \
+-D3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build="/home/dh/work/OCCT/freetype/include" \
+-D3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2="/home/dh/work/OCCT/freetype/include" \
+-DCMAKE_C_FLAGS="-matomics -mbulk-memory -pthread" \
+-DCMAKE_CXX_FLAGS="-matomics -mbulk-memory -pthread"
 
   if [ $? -ne 0 ]; then
     echo "Problem during configuration"
@@ -111,7 +101,7 @@ if [ "${toMake}" = "1" ]; then
   echo Building...
   make -j ${aNbJobs} 2>> "${aLogFile}"
   if [ $? -ne 0 ]; then
-    echo "Problem during make operation"
+    echo "Problem during make operation: check ${aLogFile}"
     popd
     exit 1
   fi
